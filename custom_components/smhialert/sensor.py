@@ -19,11 +19,8 @@ Available districts: See README.md
 import logging
 import json
 from datetime import timedelta
-#from math import radians, sin, cos, acos
-#import requests
 
 from urllib.request import urlopen
-#import aiohttp
 
 import voluptuous as vol
 
