@@ -11,7 +11,6 @@ Example advanced configuration
 
 sensor:
   - platform: smhialert
-    district: '019'
 
 Available districts: See README.md
 
@@ -22,15 +21,8 @@ from datetime import timedelta
 
 from urllib.request import urlopen
 
-import voluptuous as vol
-
-import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity import Entity
-from homeassistant.components.sensor import PLATFORM_SCHEMA
-from homeassistant.const import (
-    CONF_LATITUDE, CONF_LONGITUDE, CONF_NAME, CONF_RADIUS)
 from homeassistant.util import Throttle
-import homeassistant.util.dt as dt_util
 from homeassistant.components.rest.sensor import RestData
 
 __version__ = '1.0.0'
@@ -38,27 +30,21 @@ __version__ = '1.0.0'
 _LOGGER = logging.getLogger(__name__)
 
 DEFAULT_NAME = 'SMHIAlert'
-DEFAULT_DISTRICT = 'all'
-CONF_DISTRICT = 'district'
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
-    vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_DISTRICT) : cv.string,
-})
+#PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
+#    vol.Optional(CONF_NAME): cv.string,
+#})
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     """Set up the SMHIAlert sensor."""
-    name = config.get(CONF_NAME)
-    district = config.get(CONF_DISTRICT)
-    if config.get(CONF_NAME) is None:
-        name = DEFAULT_NAME
-    if config.get(CONF_DISTRICT) is None:
-        name = DEFAULT_DISTRICT
+    #name = config.get(CONF_NAME)
+    #if config.get(CONF_NAME) is None:
+    name = DEFAULT_NAME
 
-    api = SMHIAlert(district)
+    api = SMHIAlert()
 
     add_entities([SMHIAlertSensor(api, name)], True)
 
@@ -108,9 +94,8 @@ class SMHIAlertSensor(Entity):
 class SMHIAlert:
     """Get the latest data and update the states."""
 
-    def __init__(self, district):
+    def __init__(self):
         """Initialize the data object."""
-        self.district = district
         self.attributes = {}
         self.attributes["messages"] = []
         self.data = {}
@@ -129,24 +114,41 @@ class SMHIAlert:
             self.data['state'] = "No Alerts"
             self.attributes['messages'] = []
             for alert in jsondata['alert']:
+                # Skip if status = Actual || System
+                #if alert['status'] != 'Actual' or alert['status'] != 'System':
+                #    continue
+
                 message = {}
-                district = alert['info']['area']['areaDesc']
-                if district == self.district or self.district == 'all':
-                    message['district_code'] = district
-                    message['district_name'] = alert['info']['headline']
-                    message['identifier'] = alert['identifier']
-                    message['sent'] = alert['sent']
-                    message['type'] = alert['msgType']
-                    message['status'] = alert['status']
-                    message['event'] = alert['info']['event']
-                    message['severity'] = alert['info']['severity']
-                    message['description'] = alert['info']['description']
-                    message['link'] = alert['info']['web']
-                    self.attributes['messages'].append(message)
+
+                # Get event name in eng.
+                event_type = "unknown"
+                for event in alert['info']['eventCode']:
+                    if event['valueName'] == "system_event_level":
+                        event = event['value']
+                        break
+                _LOGGER.error(event_type)
+                message['event'] = event_type
+
+                # TBD: Skip if expired.
+                message['district_code'] = alert['info']['area']['areaDesc']
+                message['district_name'] = alert['info']['headline']
+                message['identifier'] = alert['identifier']
+                message['sent'] = alert['sent']
+                message['type'] = alert['msgType']
+                message['category'] = alert['info']['category']
+                message['certainty'] = alert['info']['certainty']
+                message['severity'] = alert['info']['severity']
+                message['description'] = alert['info']['description']
+                message['link'] = alert['info']['web']
+                message['urgency'] = alert['info']['urgency']
+                _LOGGER.error(message)
+                self.attributes['messages'].append(message)
+
             self.available = True
-            if self.attributes['messages'].len() != 0:
+            if len(self.attributes['messages']) != 0:
                 self.data['state'] = 'Alert'
         except Exception as e:
             _LOGGER.error("Unable to fetch data from SMHI.")
+            _LOGGER.error(str(e))
             self.available = False
 
