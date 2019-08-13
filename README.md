@@ -3,6 +3,10 @@ Alerts on SMHI Warnings & Alerts in Sweden.
 
 *This is based on https://github.com/isabellaalstrom/sensor.krisinformation*
 
+## Usage Screenshots
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1,png)
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2,png)
+
 ## Example Configuration
 
 In configuration.yaml for Home Assistant:
@@ -75,7 +79,7 @@ Example of full attributes that could be used in the data template is as follows
 }
 ```
 
-The *messages* contains an hash of districts (if 'all' is used) and each districts has 'msgs' which is an array of all active messages for that district.
+The *messages* contains an hash of districts (if 'all' is used) and each districts has *msgs* which is an array of all active messages for that district.
 
 ## Districts
 curl -s https://opendata-download-warnings.smhi.se/api/version/2/districtviews/all.json|jq . |egrep '(id|name)' | perl -p -e 's%^\s*(.*),\n%$1%g' | perl -p -e 's%""id%\n"id%g' |tr  '"' ' ' | perl -p -e 's% : %:%g'
