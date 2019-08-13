@@ -18,8 +18,7 @@ class SmhiAlertCard extends HTMLElement {
     }
 
     setConfig(config) {
-        if (!config.district) config.district = 'All';
-        console.log("district:",config.district);
+        if (!config.district) config.district = 'all';
 
         const root = this.shadowRoot;
         if (root.lastChild) root.removeChild(root.lastChild);
@@ -30,64 +29,39 @@ class SmhiAlertCard extends HTMLElement {
         const content = document.createElement('div');
         const style = document.createElement('style');
         style.textContent = `
-               .ico {
-                 display: inline-block;
-                 background-repeat: no-repeat;
-                 background-size: 5px 5px;
-                 background: url("https://img.icons8.com/color/50/000000/partly-cloudy-rain.png");
-               }
-               .windy {
-                 background-image: url("https://img.icons8.com/ultraviolet/40/000000/windy-weather.png");
-               }
-               .thunder {
-                 background-image: url("https://img.icons8.com/color/50/000000/cloud-lighting.png");
-               }
-               .Fire {
-                    background-image: url("https://img.icons8.com/color/50/000000/fire-element.png");
-               }
-               .Rescue {
-                    background-image: url("https://img.icons8.com/color/50/000000/fireman-male--v2.png");
-               }
-               .Safety {
-                    background-image: url("https://img.icons8.com/color/50/000000/exit-sign.png");
-               }
-               .Health {
-                    background-image: url("https://img.icons8.com/color/50/000000/health-book.png");
-               }
-               .Env {
-                    background-image: url("https://img.icons8.com/dusk/50/000000/environmental-planning.png");
-               }
-               .Infra {
-                    background-image: url("https://img.icons8.com/color/50/000000/25-de-abril-bridge.png");
-               }
-               .Transport {
-                    background-image: url("https://img.icons8.com/color/50/000000/traffic-jam.png");
-               }
-               .Geo {
-                    background-image: url("https://img.icons8.com/color/50/000000/volcano.png"");
-               }
-               .Met {
-                    background-image: url("https://img.icons8.com/color/50/000000/partly-cloudy-rain.png");
-               }
+.hover {
+}
 
+.tooltip {
+  /* hide and position tooltip */
+  background-color: black;
+  color: white;
+  border-radius: 5px;
+  opacity: 0;
+  position: absolute;
+  -webkit-transition: opacity 0.5s;
+  -moz-transition: opacity 0.5s;
+  -ms-transition: opacity 0.5s;
+  -o-transition: opacity 0.5s;
+  transition: opacity 0.5s;
+}
+
+.hover:hover tr {
+  /* display tooltip on hover */
+  opacity: 1;
+}
+.hover:hover .tooltip {
+  /* display tooltip on hover */
+  opacity: 1;
+}
                table {
                  width: 100%;
                  padding: 16px;
                }
-               .unknown {
-                  color: #000000;
-               }
-               .Minor {
-              color: #00FF00;
-               }
-               .Extreme {
-              color: #FF0000;
-               }
-               .Moderate {
-              color: #FF00FF;
-               }
-               .Severe {
-              color: #FFFF00;
+               .district {
+                   padding-left: 16px;
+                   font-size: large;
+                   text-decoration: underline;
                }
                thead th {
                  text-align: left;
@@ -100,21 +74,8 @@ class SmhiAlertCard extends HTMLElement {
                }
              `;
         content.innerHTML = `
-              <table>
-                <thead>
-                  <tr>
-                    <th>District</th>
-                    <th>Event</th>
-                    <th>Category</th>
-                    <th>Severity</th>
-                    <th>Urgency</th>
-                    <th>Date</th>
-                  </tr>
-                </thead>
-                <tbody id='attributes'>
-                </tbody>
-              </table>
-              `;
+         <div id="attributes"></div>
+        `;
         card.appendChild(style);
         card.appendChild(content);
         root.appendChild(card)
@@ -122,26 +83,45 @@ class SmhiAlertCard extends HTMLElement {
     }
 
     _updateContent(element, attributes) {
-        element.innerHTML = `
-              <tr>
-                ${attributes.map((attribute) => `
+        const config = this._config;
+        let data = "";
+        for(var k in attributes) {
+              if (config.district != k && config.district != 'all') {
+		continue;
+		}
+              data += "<div class='district hover'>"+attributes[k].name+"<div class='tooltip'>District ID: "+k+"</div></div>";
+              data += `<table>
+                <thead>
                   <tr>
-                    <td>${attribute.district_name}</td>
-                    <td>${attribute.event}</td>
-                    <td><span class="ico ${attribute.category}"></span>${attribute.category}</td>
-                    <td class="${attribute.severity}">${attribute.severity}</td>
-                    <td>${attribute.urgency}</td>
-                    <td>${attribute.sent}</td>
+                    <th>Event</th>
+                    <th>Category</th>
+                    <th>Severity</th>
+                    <th>Urgency</th>
+                    <th>Link</th>
                   </tr>
-                `).join('')}
-              `;
+                </thead>
+                <tbody>`;
+             let msg = attributes[k].messages;
+	     for(var v in msg) {
+		 data += "<tr style='color:"+msg[v].event_color+";'>";
+		 data += "<td>"+msg[v].event+"</td>";
+		 data += "<td>"+msg[v].category+"</td>";
+		 data += "<td>"+msg[v].severity+"</td>";
+		 data += "<td>"+msg[v].urgency+"</td>";
+	         data += "<td><a target='_blank' href='"+msg[v].link+"?#ws=wpt-a,proxy=wpt-a,district="+k+",page=wpt-warning-alla'>Read</a></td>";
+                 data += "</tr></a>";
+             }	
+             data += "</tbody></table>";
+
+        }
+        element.innerHTML = data;
     }
 
     set hass(hass) {
         const config = this._config;
         const root = this.shadowRoot;
-        console.log(hass.states["sensor.smhialert"]);
-	let attributes = Array.from(hass.states["sensor.smhialert"].attributes.messages);
+	//let attributes = Array.from(hass.states["sensor.smhialert"].attributes.messages);
+	let attributes = hass.states["sensor.smhialert"].attributes.messages;
         this._updateContent(root.getElementById('attributes'), attributes);
     }
 

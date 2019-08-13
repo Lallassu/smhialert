@@ -1,9 +1,13 @@
 # Home Assistant - SMHI Weather Warnings & Alerts
 Alerts on SMHI Warnings & Alerts in Sweden.
 
+*This is based on https://github.com/isabellaalstrom/sensor.krisinformation*
+
+
 ## Districts
 curl -s https://opendata-download-warnings.smhi.se/api/version/2/districtviews/all.json|jq . |egrep '(id|name)' | perl -p -e 's%^\s*(.*),\n%$1%g' | perl -p -e 's%""id%\n"id%g' |tr  '"' ' ' | perl -p -e 's% : %:%g'
 
+```
 id: 030  name: Uppsala län,Upplandskusten
 id: 031  name: Värmlands län
 id: 032  name: Västerbottens län inland
@@ -62,4 +66,4 @@ id: 026  name: Jönköpings län,syd om Vättern
 id: 027  name: Västra Götalands län,sydväst Vänern
 id: 028  name: Södermanlands län
 id: 029  name: Uppsala län utom Upplandskusten %
-
+```
