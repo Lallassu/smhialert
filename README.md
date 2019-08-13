@@ -4,8 +4,8 @@ Alerts on SMHI Warnings & Alerts in Sweden.
 *This is based on https://github.com/isabellaalstrom/sensor.krisinformation*
 
 ## Usage Screenshots
-![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1,png)
-![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2,png)
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1.png)
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2.png)
 
 ## Example Configuration
 
