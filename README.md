@@ -3,6 +3,79 @@ Alerts on SMHI Warnings & Alerts in Sweden.
 
 *This is based on https://github.com/isabellaalstrom/sensor.krisinformation*
 
+## Example Configuration
+
+In configuration.yaml for Home Assistant:
+
+Receive all notifications for all districts:
+```
+sensor:
+  - platform: smhialert
+    district: 'all'
+```
+Or specify a specific district as below:
+```
+sensor:
+  - platform: smhialert
+    district: '032'
+```
+
+*Note that even though most of this is written in english, notifications includes swedish text from SMHI.*
+
+## Automation Example Configuration
+
+In automations.yaml:
+```
+- id: smhialert
+  alias: 'SMHI Alert'
+  initial_state: 'on'
+  trigger:
+    platform: state
+    entity_id: sensor.smhialert
+    to: "Alert"
+  action:
+    - service: notify.push
+      data_template:
+         title: "SMHI Alert!"
+         message: '{{states.sensor.smhialert.attributes.notice}}'
+    - service: notify.email
+      data_template:
+         title: 'SMHI Alert!'
+         message: '{{states.sensor.smhialert.attributes.notice}}'
+```
+
+Example of full attributes that could be used in the data template is as follows:
+```
+{
+  "messages": {
+    "019": {
+      "name": "Norrbottens län inland",
+      "msgs": [
+        {
+          "event": "Risk Forest fire",
+          "event_color": "#ab56ac",
+          "district_code": "019",
+          "district_name": "Norrbottens län inland",
+          "identifier": "smhi-bpm-1564087965423",
+          "sent": "2019-07-25T22:54:41+02:00",
+          "type": "Alert",
+          "category": "Met",
+          "certainty": "Possible",
+          "severity": "Severe",
+          "description": "När: Tisdag och onsdag\nVar: I den nordöstra delen\nIntensitet: Risken för bränder i skog och mark är lokalt stor\nKommentar: -",
+          "link": "http://www.smhi.se/vadret/vadret-i-sverige/Varningar",
+          "urgency": "Expected"
+        }
+      ]
+    }
+  },
+  "notice": "[Severe] (2019-07-25T22:54:41+02:00)\nDistrict: Norrbottens län inland\nType: Alert\nCertainty: Possible\nDescr:\nNär: Tisdag och onsdag\nVar: I den nordöstra delen\nIntensitet: Risken för bränder i skog och mark är lokalt stor\nKommentar: -\nweb: http://www.smhi.se/vadret/vadret-i-sverige/Varningar?#ws=wpt-a,proxy=wpt-a,district=019,page=wpt-warning-alla'\n\n                ",
+  "friendly_name": "SMHIAlert",
+  "icon": "mdi:alert"
+}
+```
+
+The *messages* contains an hash of districts (if 'all' is used) and each districts has 'msgs' which is an array of all active messages for that district.
 
 ## Districts
 curl -s https://opendata-download-warnings.smhi.se/api/version/2/districtviews/all.json|jq . |egrep '(id|name)' | perl -p -e 's%^\s*(.*),\n%$1%g' | perl -p -e 's%""id%\n"id%g' |tr  '"' ' ' | perl -p -e 's% : %:%g'
