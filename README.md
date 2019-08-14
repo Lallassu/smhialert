@@ -44,7 +44,8 @@ title: SMHI Alerts
 type: 'custom:smhialert-card'
 ```
 
-Screenshot:
+Lovelace card screenshot:
+
 ![](https://github.com/lallassu/smhialert/blob/master/smhialert_example3.png)
 
 ## Automation Example Configuration
