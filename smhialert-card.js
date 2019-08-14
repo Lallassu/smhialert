@@ -27,6 +27,10 @@ class SmhiAlertCard extends Polymer.Element {
             border-style: dotted;
             line-height: 17px;
           }
+          .noalerts {
+            font-size: small;
+            margin-top: 10px;
+          }
           a {
             color: #FFFFFF;
           }
@@ -37,7 +41,7 @@ class SmhiAlertCard extends Polymer.Element {
                [[displayName()]]
             </div>
             <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.messages)}}">
-               <span class="msg">No current alerts.</span>
+               <span class="noalerts">No current alerts.</span>
             </template>
             <template is="dom-repeat" items="{{_toArray(stateObj.attributes.messages)}}">
               <div class="box">
