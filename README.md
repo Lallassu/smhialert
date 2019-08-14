@@ -5,8 +5,6 @@ This custom component for Home Assistant fetches data from SMHI open API and par
 is then divided into a hash map of districts and messages per district. The component can be configured
 to notify on all warnings or just for a specific district.
 
-*Note that even though most of this is written in english, notifications includes swedish text from SMHI.*
-
 *This component is based on https://github.com/isabellaalstrom/sensor.krisinformation*
 
 ## Example Configuration
@@ -111,6 +109,12 @@ The *messages* contains an hash of districts (if 'all' is used) and each distric
 ## Usage Screenshots
 ![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1.png)
 ![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2.png)
+
+## Todo
+- Alert if changes has occured. Alert is always triggering when there are _any_ alert and does not
+  take changes into account.
+- Be able to specify multiple specific districts.
+- Switch between english and swedish (currently just english)
 
 ## Districts
 The below table is obtained by issuing:
