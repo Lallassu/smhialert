@@ -1,133 +1,109 @@
-// Windy: <img src="https://img.icons8.com/ultraviolet/40/000000/windy-weather.png">
-// Thunder: <img src="https://img.icons8.com/color/50/000000/cloud-lighting.png">
-//
-// Category:
-// Fire: <img src="https://img.icons8.com/color/50/000000/fire-element.png">
-// Rescue: <img src="https://img.icons8.com/color/50/000000/fireman-male--v2.png">
-// Safety: <img src="https://img.icons8.com/color/50/000000/exit-sign.png">
-// Health: <img src="https://img.icons8.com/color/50/000000/health-book.png">
-// env: <img src="https://img.icons8.com/dusk/50/000000/environmental-planning.png">
-// infra: <img src="https://img.icons8.com/color/50/000000/25-de-abril-bridge.png">
-// transport: <img src="https://img.icons8.com/color/50/000000/traffic-jam.png">
-// geo: <img src="https://img.icons8.com/color/50/000000/volcano.png">
-// met: <img src="https://img.icons8.com/color/50/000000/partly-cloudy-rain.png">
-class SmhiAlertCard extends HTMLElement {
-    constructor() {
-        super();
-        this.attachShadow({ mode: 'open' });
+class SmhiAlertCard extends Polymer.Element {
+    static get template() {
+        return Polymer.html`
+         <style>
+          ha-card {
+            padding: 16px;
+          }
+          .box {
+            padding: 5px;
+            box-shadow: 1px 1px 1px 1px #222222;
+          }
+          .district {
+             font-size: large;
+             text-decoration: underline;
+             margin-top: 10px;
+          }
+          .header {
+            @apply --paper-font-headline;
+            color: var(--primary-text-color);
+            padding: 4px 0 12px;
+            line-height: 40px;
+          }
+          .msg {
+            font-size: small;
+            margin-top: 10px;
+            border: 1px;
+            border-style: dotted;
+            line-height: 17px;
+          }
+          a {
+            color: #FFFFFF;
+          }
+        </style>
+        <ha-card>
+          <div class="header">
+            <div class="name">
+               [[displayName()]]
+            </div>
+            <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.messages)}}">
+               <span class="msg">No current alerts.</span>
+            </template>
+            <template is="dom-repeat" items="{{_toArray(stateObj.attributes.messages)}}">
+              <div class="box">
+                 <div><span class="district">{{item.value.name}}</span></div>
+                 <template is="dom-repeat" items="{{item.value.msgs}}">
+                    <div class="msg" style="color: {{item.event_color}};">
+                       <span><b>Event</b>: {{item.event}}<span><br>
+                       <span><b>Severity</b>: {{item.severity}}<span><br>
+                       <span><b>Issued</b>: {{item.sent}}</span><br>
+                       <span><b>Certainty</b>: {{item.certainty}}</span><br>
+                       <span><b>Web Link</b>: <a target="_blank" href="{{item.link}}?#ws=wpt-a,proxy=wpt-a,district={{item.district_code}},page=wpt-warning-alla">Read more</a></span><br>
+                       <span><b>Description</b>: {{item.description}}</span>
+                    </div>
+                 </template>
+              </div>
+            </template>
+          </div>
+        </ha-card>
+        `;
+    }
+
+    static get properties() {
+        return {
+            _hass: Object,
+            _config: Object,
+            _stateObj: Object,
+            _error: String,
+            _test: Array
+        }
+    }
+
+    _hasNoMessages(x) {
+        if (Object.keys(x).length > 0) {
+            return false;
+        }
+        return true;
+    }
+
+    _toArray(obj) {
+        return Object.keys(obj).map(function(key) {
+            return {
+                name: key,
+                value: obj[key]
+            };
+        });
     }
 
     setConfig(config) {
-        if (!config.district) config.district = 'all';
-
-        const root = this.shadowRoot;
-        if (root.lastChild) root.removeChild(root.lastChild);
-
-        const cardConfig = Object.assign({}, config);
-        const card = document.createElement('ha-card');
-        card.header = config.title;
-        const content = document.createElement('div');
-        const style = document.createElement('style');
-        style.textContent = `
-.hover {
-}
-
-.tooltip {
-  /* hide and position tooltip */
-  background-color: black;
-  color: white;
-  border-radius: 5px;
-  opacity: 0;
-  position: absolute;
-  -webkit-transition: opacity 0.5s;
-  -moz-transition: opacity 0.5s;
-  -ms-transition: opacity 0.5s;
-  -o-transition: opacity 0.5s;
-  transition: opacity 0.5s;
-}
-
-.hover:hover tr {
-  /* display tooltip on hover */
-  opacity: 1;
-}
-.hover:hover .tooltip {
-  /* display tooltip on hover */
-  opacity: 1;
-}
-               table {
-                 width: 100%;
-                 padding: 16px;
-               }
-               .district {
-                   padding-left: 16px;
-                   font-size: large;
-                   text-decoration: underline;
-               }
-               thead th {
-                 text-align: left;
-               }
-               tbody tr:nth-child(odd) {
-                 background-color: var(--paper-card-background-color);
-               }
-               tbody tr:nth-child(even) {
-                 background-color: var(--secondary-background-color);
-               }
-             `;
-        content.innerHTML = `
-         <div id="attributes"></div>
-        `;
-        card.appendChild(style);
-        card.appendChild(content);
-        root.appendChild(card)
-        this._config = cardConfig;
-    }
-
-    _updateContent(element, attributes) {
-        const config = this._config;
-        let data = "";
-        for(var k in attributes) {
-              if (config.district != k && config.district != 'all') {
-		continue;
-		}
-              data += "<div class='district hover'>"+attributes[k].name+"<div class='tooltip'>District ID: "+k+"</div></div>";
-              data += `<table>
-                <thead>
-                  <tr>
-                    <th>Event</th>
-                    <th>Category</th>
-                    <th>Severity</th>
-                    <th>Urgency</th>
-                    <th>Link</th>
-                  </tr>
-                </thead>
-                <tbody>`;
-             let msg = attributes[k].messages;
-	     for(var v in msg) {
-		 data += "<tr style='color:"+msg[v].event_color+";'>";
-		 data += "<td>"+msg[v].event+"</td>";
-		 data += "<td>"+msg[v].category+"</td>";
-		 data += "<td>"+msg[v].severity+"</td>";
-		 data += "<td>"+msg[v].urgency+"</td>";
-	         data += "<td><a target='_blank' href='"+msg[v].link+"?#ws=wpt-a,proxy=wpt-a,district="+k+",page=wpt-warning-alla'>Read</a></td>";
-                 data += "</tr></a>";
-             }	
-             data += "</tbody></table>";
-
-        }
-        element.innerHTML = data;
+        this._config = config;
     }
 
     set hass(hass) {
-        const config = this._config;
-        const root = this.shadowRoot;
-	//let attributes = Array.from(hass.states["sensor.smhialert"].attributes.messages);
-	let attributes = hass.states["sensor.smhialert"].attributes.messages;
-        this._updateContent(root.getElementById('attributes'), attributes);
+        this._hass = hass;
+        this.stateObj = hass.states[this._config.entity];
+        console.log(this.stateObj);
     }
 
-    getCardSize() {
-        return 1;
+    displayName() {
+		return this._config.name || this._config.title || this.stateObj.attributes.friendly_name;
+	}
+
+
+    stopPropagation(e) {
+        e.stopPropagation();
     }
+
 }
 
 customElements.define('smhialert-card', SmhiAlertCard);

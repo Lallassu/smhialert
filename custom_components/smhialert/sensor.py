@@ -133,6 +133,7 @@ class SMHIAlert:
                 msg['event_color'] = event_color
 
                 msg['district_code'] = alert['info']['area']['areaDesc']
+                # Districts are named same in both SV and EN
                 msg['district_name'] = alert['info']['headline']
                 msg['identifier'] = alert['identifier']
                 msg['sent'] = alert['sent']
@@ -140,7 +141,14 @@ class SMHIAlert:
                 msg['category'] = alert['info']['category']
                 msg['certainty'] = alert['info']['certainty']
                 msg['severity'] = alert['info']['severity']
+
                 msg['description'] = alert['info']['description']
+
+                # Fetch the english version of the description
+                for param in alert['info']['parameter']:
+                    if param['valueName'] == 'system_eng_description':
+                        msg['description'] = param['value']
+
                 msg['link'] = alert['info']['web']
                 msg['urgency'] = alert['info']['urgency']
 
@@ -152,8 +160,7 @@ Type: {type}
 Certainty: {certainty}
 Descr:
 {description}
-web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n
-                '''.format(**msg)
+web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
 
                 # Add all msgs to each district
                 if msg['district_name'] not in districts:

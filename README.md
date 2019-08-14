@@ -1,11 +1,13 @@
 # Home Assistant - SMHI Weather Warnings & Alerts
-Alerts on SMHI Warnings & Alerts in Sweden.
+Retrieve SMHI Warnings & Alerts in Sweden and trigger actions, view in the home assistant dashboard.
 
-*This is based on https://github.com/isabellaalstrom/sensor.krisinformation*
+This custom component for Home Assistant fetches data from SMHI open API and parses it. The data
+is then divided into a hash map of districts and messages per district. The component can be configured
+to notify on all warnings or just for a specific district.
 
-## Usage Screenshots
-![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1.png)
-![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2.png)
+*Note that even though most of this is written in english, notifications includes swedish text from SMHI.*
+
+*This component is based on https://github.com/isabellaalstrom/sensor.krisinformation*
 
 ## Example Configuration
 
@@ -24,9 +26,34 @@ sensor:
     district: '032'
 ```
 
-*Note that even though most of this is written in english, notifications includes swedish text from SMHI.*
+Available districts are listed at the bottom of this README.
+
+## Custom Lovelace Card
+
+Download the smhialert-card.js and place in your *www* folder of Home Assistant.
+
+Configure the UI (raw edit) and add this to the lovelace configuration:
+```
+resources:
+  - type: js
+    url: /local/smhialert-card.js
+```
+
+Then you can add a custom card with the following settings:
+```
+entity: sensor.smhialert
+title: SMHI Alerts
+type: 'custom:smhialert-card'
+```
+
+Screenshot:
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example3.png)
 
 ## Automation Example Configuration
+
+The below example configures an notification both as push notification and as an email notification.
+It will use the prefabricated *notice* that is created by the component. It is also possible to 
+use the data structure and configure the message manually (*sensor.smhialert.attributes.messages*).
 
 In automations.yaml:
 ```
@@ -81,8 +108,15 @@ Example of full attributes that could be used in the data template is as follows
 
 The *messages* contains an hash of districts (if 'all' is used) and each districts has *msgs* which is an array of all active messages for that district.
 
+## Usage Screenshots
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example1.png)
+![](https://github.com/lallassu/smhialert/blob/master/smhialert_example2.png)
+
 ## Districts
+The below table is obtained by issuing:
+```
 curl -s https://opendata-download-warnings.smhi.se/api/version/2/districtviews/all.json|jq . |egrep '(id|name)' | perl -p -e 's%^\s*(.*),\n%$1%g' | perl -p -e 's%""id%\n"id%g' |tr  '"' ' ' | perl -p -e 's% : %:%g'
+```
 
 ```
 id: 030  name: Uppsala län,Upplandskusten
@@ -144,3 +178,4 @@ id: 027  name: Västra Götalands län,sydväst Vänern
 id: 028  name: Södermanlands län
 id: 029  name: Uppsala län utom Upplandskusten %
 ```
+
