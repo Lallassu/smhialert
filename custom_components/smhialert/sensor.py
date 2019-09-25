@@ -111,6 +111,10 @@ class SMHIAlert:
             self.data['state'] = "No Alerts"
             self.attributes['messages'] = []
             self.attributes['notice'] = ""
+
+            if len(jsondata) == 0:
+                return
+
             districts = {}
             notice = ""
             alerts = []
