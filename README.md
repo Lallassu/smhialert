@@ -26,6 +26,8 @@ sensor:
 
 Available districts are listed at the bottom of this README.
 
+You can also chose to get the available information in Swedish by adding `language: 'sv'` to your config for the sensor.
+
 ## Custom Lovelace Card
 
 Download the smhialert-card.js and place in your *www* folder of Home Assistant.
@@ -115,7 +117,6 @@ The *messages* contains an hash of districts (if 'all' is used) and each distric
 - Alert if changes has occured. Alert is always triggering when there are _any_ alert and does not
   take changes into account.
 - Be able to specify multiple specific districts.
-- Switch between english and swedish (currently just english)
 
 ## Districts
 The below table is obtained by issuing:
