@@ -38,19 +38,22 @@ _LOGGER = logging.getLogger(__name__)
 # Using one name to be able to use the custom smhialert-card
 NAME = 'SMHIAlert'
 CONF_DISTRICT = 'district'
+CONF_LANGUAGE = 'language'
 
 SCAN_INTERVAL = timedelta(minutes=5)
 
 
 PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
     vol.Optional(CONF_NAME): cv.string,
-    vol.Optional(CONF_DISTRICT, default='all'): cv.string
+    vol.Optional(CONF_DISTRICT, default='all'): cv.string,
+    vol.Optional(CONF_LANGUAGE, default='en'): cv.string
 })
 
 
 def setup_platform(hass, config, add_entities, discovery_info=None):
     district = config.get(CONF_DISTRICT)
-    api = SMHIAlert(district)
+    language = config.get(CONF_LANGUAGE)
+    api = SMHIAlert(district, language)
 
     add_entities([SMHIAlertSensor(api, NAME)], True)
 
@@ -90,15 +93,19 @@ class SMHIAlertSensor(Entity):
 
 
 class SMHIAlert:
-    def __init__(self, district):
+    def __init__(self, district, language):
         self.district = district
+        self.language = language
         self.attributes = {}
         self.attributes["messages"] = []
         self.attributes["notice"] = ""
         self.data = {}
         self.available = True
         self.update()
-        self.data['state'] = "No Alerts"
+        if self.language is 'en':
+            self.data['state'] = "No Alerts"
+        else:
+            self.data['state'] = "Inga varningar"
 
     @Throttle(SCAN_INTERVAL)
     def update(self):
@@ -107,8 +114,12 @@ class SMHIAlert:
                 'https://opendata-download-warnings.smhi.se/api/version/2/alerts.json')
             data = response.read().decode('utf-8')
             jsondata = json.loads(data)
+            
+            if self.language is 'en':
+                self.data['state'] = "No Alerts"
+            else:
+                self.data['state'] = "Inga varningar"
 
-            self.data['state'] = "No Alerts"
             self.attributes['messages'] = []
             self.attributes['notice'] = ""
 
@@ -131,17 +142,7 @@ class SMHIAlert:
                     continue
 
                 msg = {}
-
-                event_type = "unknown"
-                event_color = "#FFFFFF"
-                for event in alert['info']['eventCode']:
-                    if event['valueName'] == "system_event_level":
-                        event_type = event['value']
-                    if event['valueName'] == "system_event_level_color":
-                        event_color = event['value']
-                msg['event'] = event_type
-                msg['event_color'] = event_color
-
+                
                 msg['district_code'] = alert['info']['area']['areaDesc']
                 # Districts are named same in both SV and EN
                 msg['district_name'] = alert['info']['headline']
@@ -151,26 +152,56 @@ class SMHIAlert:
                 msg['category'] = alert['info']['category']
                 msg['certainty'] = alert['info']['certainty']
                 msg['severity'] = alert['info']['severity']
-
-                msg['description'] = alert['info']['description']
-
-                # Fetch the english version of the description
-                for param in alert['info']['parameter']:
-                    if param['valueName'] == 'system_eng_description':
-                        msg['description'] = param['value']
-
                 msg['link'] = alert['info']['web']
                 msg['urgency'] = alert['info']['urgency']
 
-                # Prefab a notice that can be easily sent in email/notifications
-                notice += '''\
-[{severity}] ({sent})
-District: {district_name}
-Type: {type}
-Certainty: {certainty}
-Descr:
-{description}
-web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
+                if self.language is 'en':
+                    event_type = "unknown"
+                    event_color = "#FFFFFF"
+                    for event in alert['info']['eventCode']:
+                        if event['valueName'] == "system_event_level":
+                            event_type = event['value']
+                        if event['valueName'] == "system_event_level_color":
+                            event_color = event['value']
+                    msg['event'] = event_type
+                    msg['event_color'] = event_color
+                    msg['description'] = alert['info']['description']
+
+                    # Fetch the english version of the description
+                    for param in alert['info']['parameter']:
+                        if param['valueName'] == 'system_eng_description':
+                            msg['description'] = param['value']
+
+                    # Prefab a notice that can be easily sent in email/notifications
+                    notice += '''\
+    [{severity}] ({sent})
+    District: {district_name}
+    Type: {type}
+    Certainty: {certainty}
+    Descr:
+    {description}
+    web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
+
+                else:
+                    event_type = "okänd"
+                    event_color = "#FFFFFF"
+                    for event in alert['info']['eventCode']:
+                        if event['valueName'] == "system_event_level_sv-SE":
+                            event_type = event['value']
+                        if event['valueName'] == "system_event_level_color":
+                            event_color = event['value']
+                    msg['event'] = event_type
+                    msg['event_color'] = event_color
+                    msg['description'] = alert['info']['description']
+                    # Prefab a notice that can be easily sent in email/notifications
+                    notice += '''\
+    [{severity}] ({sent})
+    Område: {district_name}
+    Typ: {type}
+    Trolighet: {certainty}
+    Beskrivning:
+    {description}
+    Länk: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
 
                 # Add all msgs to each district
                 if msg['district_name'] not in districts:
@@ -179,6 +210,8 @@ web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla
                               ]["name"] = msg['district_name']
                     districts[msg['district_code']]["msgs"] = []
                 districts[msg['district_code']]["msgs"].append(msg)
+
+
 
             self.available = True
             if len(districts) != 0:
