@@ -102,7 +102,7 @@ class SMHIAlert:
         self.data = {}
         self.available = True
         self.update()
-        if self.language is 'en':
+        if self.language == 'en':
             self.data['state'] = "No Alerts"
         else:
             self.data['state'] = "Inga varningar"
@@ -115,7 +115,7 @@ class SMHIAlert:
             data = response.read().decode('utf-8')
             jsondata = json.loads(data)
             
-            if self.language is 'en':
+            if self.language == 'en':
                 self.data['state'] = "No Alerts"
             else:
                 self.data['state'] = "Inga varningar"
@@ -155,7 +155,7 @@ class SMHIAlert:
                 msg['link'] = alert['info']['web']
                 msg['urgency'] = alert['info']['urgency']
 
-                if self.language is 'en':
+                if self.language == 'en':
                     event_type = "unknown"
                     event_color = "#FFFFFF"
                     for event in alert['info']['eventCode']:
