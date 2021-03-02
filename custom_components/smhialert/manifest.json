@@ -4,6 +4,6 @@
   "documentation": "https://github.com/lallassu/smhialert",
   "dependencies": [],
   "codeowners": ["@lallassu"],
-  "requirements": []
+  "requirements": [],
   "version": "v1.0.0"
 }
