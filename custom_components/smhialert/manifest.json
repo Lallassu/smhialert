@@ -5,4 +5,5 @@
   "dependencies": [],
   "codeowners": ["@lallassu"],
   "requirements": []
+  "version": "v1.0.0"
 }
