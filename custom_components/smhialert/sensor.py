@@ -29,9 +29,8 @@ from homeassistant.helpers.entity import Entity
 from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (CONF_NAME)
 from homeassistant.util import Throttle
-from homeassistant.components.rest.sensor import RestData
 
-__version__ = '1.0.0'
+__version__ = '1.0.1'
 
 _LOGGER = logging.getLogger(__name__)
 
