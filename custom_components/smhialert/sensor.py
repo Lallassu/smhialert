@@ -109,11 +109,10 @@ class SMHIAlert:
     @Throttle(SCAN_INTERVAL)
     def update(self):
         try:
-            response = urlopen(
-                'https://opendata-download-warnings.smhi.se/api/version/2/alerts.json')
+            response = urlopen('https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json')
             data = response.read().decode('utf-8')
             jsondata = json.loads(data)
-            
+
             if self.language == 'en':
                 self.data['state'] = "No Alerts"
             else:
@@ -128,88 +127,62 @@ class SMHIAlert:
             districts = {}
             notice = ""
             alerts = []
-            if isinstance(jsondata['alert'], dict):
-                alerts.append(jsondata['alert'])
-            else:
-                alerts = jsondata['alert']
+            for alert in jsondata:
+                areas = []
+                for wa in alert["warningAreas"]:
+                    areas.append(wa)
 
-            for alert in alerts:
-                if not (alert['status'] == 'Actual' or alert['status'] == 'System'):
-                    continue
+                for area in areas:
+                    msg = {}
+                    msg["event"] = alert["event"][language]
 
-                if alert['info']['area']['areaDesc'] != self.district and self.district != 'all':
-                    continue
+                    msg["start"] = area["approximateStart"]
+                    msg["published"] = area["published"]
 
-                msg = {}
-                
-                msg['district_code'] = alert['info']['area']['areaDesc']
-                # Districts are named same in both SV and EN
-                msg['district_name'] = alert['info']['headline']
-                msg['identifier'] = alert['identifier']
-                msg['sent'] = alert['sent']
-                msg['type'] = alert['msgType']
-                msg['category'] = alert['info']['category']
-                msg['certainty'] = alert['info']['certainty']
-                msg['severity'] = alert['info']['severity']
-                msg['link'] = alert['info']['web']
-                msg['urgency'] = alert['info']['urgency']
+                    msg["code"] = area["warningLevel"]["code"]
+                    msg["severity"] = area["warningLevel"][language]
+                    msg["level"] = area["warningLevel"][language]
+                    msg["descr"] = area["eventDescription"][language]
 
-                if self.language == 'en':
+                    areas = []
+                    validArea = False
+                    for a in area["affectedAreas"]:
+                        if area["id"] == self.district or self.district == 'all':
+                            validArea = True
+                        areas.append(a[language])
+
+                    if not validArea:
+                        continue
+
+                    msg["area"] = ''.join(areas)
+
                     event_type = "unknown"
                     event_color = "#FFFFFF"
-                    for event in alert['info']['eventCode']:
-                        if event['valueName'] == "system_event_level":
-                            event_type = event['value']
-                        if event['valueName'] == "system_event_level_color":
-                            event_color = event['value']
-                    msg['event'] = event_type
-                    msg['event_color'] = event_color
-                    msg['description'] = alert['info']['description']
+                    if msg["code"] == "RED":
+                        event_color ="#FF0000"
+                    elif msg["code"] == "YELLOW":
+                        event_color = "#FFFF00"
+                    elif msg["code"] == "ORANGE":
+                        event_color = "#FF7F00"
 
-                    # Fetch the english version of the description
-                    for param in alert['info']['parameter']:
-                        if param['valueName'] == 'system_eng_description':
-                            msg['description'] = param['value']
-
-                    # Prefab a notice that can be easily sent in email/notifications
-                    notice += '''\
-    [{severity}] ({sent})
-    District: {district_name}
-    Type: {type}
-    Certainty: {certainty}
+                    if self.language == 'en':
+                        notice += '''\
+    [{severity}] ({published})
+    District: {area}
+    Level: {level}
+    Type: {event}
+    Start: {start}
     Descr:
-    {description}
-    web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
-
-                else:
-                    event_type = "okänd"
-                    event_color = "#FFFFFF"
-                    for event in alert['info']['eventCode']:
-                        if event['valueName'] == "system_event_level_sv-SE":
-                            event_type = event['value']
-                        if event['valueName'] == "system_event_level_color":
-                            event_color = event['value']
-                    msg['event'] = event_type
-                    msg['event_color'] = event_color
-                    msg['description'] = alert['info']['description']
-                    # Prefab a notice that can be easily sent in email/notifications
-                    notice += '''\
-    [{severity}] ({sent})
-    Område: {district_name}
-    Typ: {type}
-    Trolighet: {certainty}
+    {descr}\n'''.format(**msg)
+                    else:
+                        notice += '''\
+    [{severity}] ({published})
+    Område: {area}
+    Nivå: {level}
+    Typ: {event}
+    Start: {start}
     Beskrivning:
-    {description}
-    Länk: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
-
-                # Add all msgs to each district
-                if msg['district_name'] not in districts:
-                    districts[msg['district_code']] = {}
-                    districts[msg['district_code']
-                              ]["name"] = msg['district_name']
-                    districts[msg['district_code']]["msgs"] = []
-                districts[msg['district_code']]["msgs"].append(msg)
-
+    {descr}\n'''.format(**msg)
 
 
             self.available = True
