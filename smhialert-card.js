@@ -46,7 +46,7 @@ class SmhiAlertCard extends Polymer.Element {
             <template is="dom-repeat" items="{{_toArray(stateObj.attributes.messages)}}">
               <div class="box">
                  <div><span class="district">{{item.value.name}}</span></div>
-                 <template is="dom-repeat" items="{{item.value.msgs}}">
+                 <template is="dom-repeat" items="{{item.msgs}}">
                     <div class="msg" style="color: {{item.event_color}};">
                        <span><b>Event</b>: {{item.event}}<span><br>
                        <span><b>Level</b>: {{item.level}}<span><br>
