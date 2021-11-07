@@ -43,9 +43,18 @@ class SmhiAlertCard extends Polymer.Element {
             <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.messages)}}">
                <span class="noalerts">No current alerts.</span>
             </template>
+            <h1>WHAT!</h1>
             <template is="dom-repeat" items="{{stateObj.attributes.messages}}">
               <div class="box">
-              {{item}}
+                 <div><span class="district">{{item.area}}</span></div>
+                    <div class="msg" style="color: {{item.event_color}};">
+                       <span><b>Event</b>: {{item.event}}<span><br>
+                       <span><b>Level</b>: {{item.level}}<span><br>
+                       <span><b>Severity</b>: {{item.severity}}<span><br>
+                       <span><b>Issued</b>: {{item.published}}</span><br>
+                       <span><b>Period</b>: {{item.start}} - {{item.end}}</span><br>
+                       <span>{{item.details}}</span>
+                    </div>
               </div>
             </template>
           </div>
@@ -78,7 +87,7 @@ class SmhiAlertCard extends Polymer.Element {
     set hass(hass) {
         this._hass = hass;
         this.stateObj = hass.states[this._config.entity];
-        console.log(this.stateObj);
+        console.log("OBJ:",this.stateObj);
     }
 
     displayName() {
