@@ -126,17 +126,25 @@ class SMHIAlert:
 
             districts = {}
             notice = ""
-            alerts = []
             for alert in jsondata:
                 areas = []
                 for wa in alert["warningAreas"]:
                     areas.append(wa)
 
+                validAreas = []
                 for area in areas:
+                    for a in area["affectedAreas"]:
+                        if str(a["id"]) == self.district or self.district == 'all':
+                            validAreas.append(a[self.language])
+
+                    if len(validAreas) == 0:
+                        continue
+
                     msg = {}
                     msg["event"] = alert["event"][self.language]
 
                     msg["start"] = area["approximateStart"]
+                    msg["end"] = area["approximateEnd"]
                     msg["published"] = area["published"]
 
                     msg["code"] = area["warningLevel"]["code"]
@@ -144,17 +152,14 @@ class SMHIAlert:
                     msg["level"] = area["warningLevel"][self.language]
                     msg["descr"] = area["eventDescription"][self.language]
 
-                    areas = []
-                    validArea = False
-                    for a in area["affectedAreas"]:
-                        if area["id"] == self.district or self.district == 'all':
-                            validArea = True
-                        areas.append(a[self.language])
+                    # Details
+                    details = ""
+                    for m in area["descriptions"]:
+                        details += "%s: %s\n"%(m["title"][self.language],m["text"][self.language])
 
-                    if not validArea:
-                        continue
+                    msg["details"] = details
 
-                    msg["area"] = ''.join(areas)
+                    msg["area"] = ", ".join(validAreas)
 
                     event_type = "unknown"
                     event_color = "#FFFFFF"
@@ -167,22 +172,23 @@ class SMHIAlert:
 
                     if self.language == 'en':
                         notice += '''\
-    [{severity}] ({published})
-    District: {area}
-    Level: {level}
-    Type: {event}
-    Start: {start}
-    Descr:
-    {descr}\n'''.format(**msg)
+[{severity}] ({published})
+District: {area}
+Level: {level}
+Type: {event}
+Start: {start}
+End: {end}
+{details}\n'''.format(**msg)
                     else:
                         notice += '''\
-    [{severity}] ({published})
-    Område: {area}
-    Nivå: {level}
-    Typ: {event}
-    Start: {start}
-    Beskrivning:
-    {descr}\n'''.format(**msg)
+[{severity}] ({published})
+Område: {area}
+Nivå: {level}
+Typ: {event}
+Start: {start}
+Slut: {end}
+Beskrivning:
+{details}\n'''.format(**msg)
 
 
             self.available = True
