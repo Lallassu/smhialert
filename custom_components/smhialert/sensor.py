@@ -79,7 +79,7 @@ class SMHIAlertSensor(Entity):
     @property
     def device_state_attributes(self):
         data = {
-            'message': self._api.attributes['message'],
+            'messages': self._api.attributes['messages'],
             'notice': self._api.attributes['notice']
         }
         return data
@@ -97,7 +97,7 @@ class SMHIAlert:
         self.district = district
         self.language = language
         self.attributes = {}
-        self.attributes["message"] = []
+        self.attributes["messages"] = []
         self.attributes["notice"] = ""
         self.data = {}
         self.available = True
@@ -119,7 +119,7 @@ class SMHIAlert:
             else:
                 self.data['state'] = "Inga varningar"
 
-            self.attributes['message'] = []
+            self.attributes['messages'] = []
             self.attributes['notice'] = ""
 
             if len(jsondata) == 0:
@@ -189,11 +189,12 @@ Start: {start}
 Slut: {end}
 Beskrivning:
 {details}\n'''.format(**msg)
+                    msgs.append(msg)
 
             self.available = True
             if notice != "":
                 self.data['state'] = 'Alert'
-                self.attributes['message'] = msg
+                self.attributes['messages'] = msgs
                 self.attributes['notice'] = notice
         except Exception as e:
             _LOGGER.error("Unable to fetch data from SMHI.")

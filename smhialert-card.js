@@ -40,10 +40,10 @@ class SmhiAlertCard extends Polymer.Element {
             <div class="name">
                [[displayName()]]
             </div>
-            <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.message)}}">
+            <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.messages)}}">
                <span class="noalerts">No current alerts.</span>
             </template>
-            <template is="dom-repeat" items="{{_toArray(stateObj.attributes.message)}}">
+            <template is="dom-repeat" items="{{_toArray(stateObj.attributes.messages)}}">
               <div class="box">
                  <div><span class="district">{{item.value.name}}</span></div>
                  <template is="dom-repeat" items="{{item.value.msgs}}">
