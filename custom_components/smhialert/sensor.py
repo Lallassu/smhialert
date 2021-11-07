@@ -171,6 +171,8 @@ class SMHIAlert:
                     elif msg["code"] == "ORANGE":
                         event_color = "#FF7F00"
 
+                    msg["event_color"] = event_color
+
                     if self.language == 'en':
                         notice += '''\
 [{severity}] ({published})
