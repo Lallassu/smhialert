@@ -11,7 +11,8 @@ sensor:
 Or specifying a specific district.
 sensor:
   - platform: smhialert
-    district: '019'
+    district: '19'
+    language: 'sv'
 
 Available districts: See README.md
 
@@ -78,7 +79,7 @@ class SMHIAlertSensor(Entity):
     @property
     def device_state_attributes(self):
         data = {
-            'messages': self._api.attributes['messages'],
+            'message': self._api.attributes['message'],
             'notice': self._api.attributes['notice']
         }
         return data
@@ -96,7 +97,7 @@ class SMHIAlert:
         self.district = district
         self.language = language
         self.attributes = {}
-        self.attributes["messages"] = []
+        self.attributes["message"] = []
         self.attributes["notice"] = ""
         self.data = {}
         self.available = True
@@ -118,13 +119,12 @@ class SMHIAlert:
             else:
                 self.data['state'] = "Inga varningar"
 
-            self.attributes['messages'] = []
+            self.attributes['message'] = []
             self.attributes['notice'] = ""
 
             if len(jsondata) == 0:
                 return
 
-            districts = {}
             notice = ""
             for alert in jsondata:
                 areas = []
@@ -190,11 +190,10 @@ Slut: {end}
 Beskrivning:
 {details}\n'''.format(**msg)
 
-
             self.available = True
-            if len(districts) != 0:
+            if notice != "":
                 self.data['state'] = 'Alert'
-                self.attributes['messages'] = districts
+                self.attributes['message'] = msg
                 self.attributes['notice'] = notice
         except Exception as e:
             _LOGGER.error("Unable to fetch data from SMHI.")
