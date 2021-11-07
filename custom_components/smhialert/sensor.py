@@ -110,6 +110,7 @@ class SMHIAlert:
     @Throttle(SCAN_INTERVAL)
     def update(self):
         try:
+            msgs = []
             response = urlopen('https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json')
             data = response.read().decode('utf-8')
             jsondata = json.loads(data)
