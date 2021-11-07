@@ -52,7 +52,7 @@ class SmhiAlertCard extends Polymer.Element {
                        <span><b>Severity</b>: {{item.severity}}<span><br>
                        <span><b>Issued</b>: {{item.published}}</span><br>
                        <span><b>Period</b>: {{item.start}} - {{item.end}}</span><br>
-                       <span>{{item.description}}</span>
+                       <span>{{item.details}}</span>
                     </div>
               </div>
             </template>
@@ -72,6 +72,7 @@ class SmhiAlertCard extends Polymer.Element {
     }
 
     _hasNoMessages(x) {
+        console.log("X: ", len(x));
         if (x.length > 0) {
             return false;
         }
