@@ -134,22 +134,22 @@ class SMHIAlert:
 
                 for area in areas:
                     msg = {}
-                    msg["event"] = alert["event"][language]
+                    msg["event"] = alert["event"][self.language]
 
                     msg["start"] = area["approximateStart"]
                     msg["published"] = area["published"]
 
                     msg["code"] = area["warningLevel"]["code"]
-                    msg["severity"] = area["warningLevel"][language]
-                    msg["level"] = area["warningLevel"][language]
-                    msg["descr"] = area["eventDescription"][language]
+                    msg["severity"] = area["warningLevel"][self.language]
+                    msg["level"] = area["warningLevel"][self.language]
+                    msg["descr"] = area["eventDescription"][self.language]
 
                     areas = []
                     validArea = False
                     for a in area["affectedAreas"]:
                         if area["id"] == self.district or self.district == 'all':
                             validArea = True
-                        areas.append(a[language])
+                        areas.append(a[self.language])
 
                     if not validArea:
                         continue
