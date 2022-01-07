@@ -21,7 +21,7 @@ Or specify a specific district as below:
 ```
 sensor:
   - platform: smhialert
-    district: '032'
+    district: '9'
 ```
 
 Available districts are listed at the bottom of this README.
@@ -118,70 +118,51 @@ The *messages* contains an hash of districts (if 'all' is used) and each distric
   take changes into account.
 - Be able to specify multiple specific districts.
 
-## Districts
+## Areas
 The below table is obtained by issuing:
 ```
-curl -s https://opendata-download-warnings.smhi.se/api/version/2/districtviews/all.json|jq . |egrep '(id|name)' | perl -p -e 's%^\s*(.*),\n%$1%g' | perl -p -e 's%""id%\n"id%g' |tr  '"' ' ' | perl -p -e 's% : %:%g'
+$ curl -s https://opendata-download-warnings.smhi.se/ibww/api/version/1/metadata/area.json | jq -r '.[] |  [.id,.sv] | join(", ")' |sort -h
 ```
-
+List of areas:
 ```
-id: 030  name: Uppsala län,Upplandskusten
-id: 031  name: Värmlands län
-id: 032  name: Västerbottens län inland
-id: 033  name: Västerbottens län kustland
-id: 034  name: Västernorrlands län
-id: 035  name: Västmanlands län
-id: 036  name: Västra Götalands län,norra Västergötland
-id: 037  name: Kalmar län,Öland
-id: 038  name: Örebro län
-id: 039  name: Östergötlands län
-id: 040  name: Skåne län,Österlen
-id: 041  name: Bottenviken
-id: 042  name: Norra Kvarken
-id: 043  name: Norra Bottenhavet
-id: 044  name: Södra Bottenhavet
-id: 001  name: Norrbottens län,norra Lapplandsfjällen
-id: 045  name: Ålands hav
-id: 002  name: Västerbottens län,södra Lapplandsfjällen
-id: 046  name: Skärgårdshavet
-id: 003  name: Jämtlands län,Jämtlandsfjällen
-id: 047  name: Finska viken
-id: 004  name: Jämtlands län,Härjedalsfjällen
-id: 048  name: Norra Östersjön
-id: 005  name: Dalarnas län,Dalafjällen
-id: 049  name: Mellersta Östersjön
-id: 006  name: Blekinge län
-id: 007  name: Västra Götalands län,Bohuslän och Göteborg
-id: 008  name: Dalarnas län utom Dalafjällen
-id: 009  name: Västra Götalands län,inre Dalsland
-id: 050  name: Rigabukten
-id: 051  name: Sydöstra Östersjön
-id: 052  name: Södra Östersjön
-id: 053  name: Sydvästra Östersjön
-id: 010  name: Gotlands län
-id: 054  name: Bälten
-id: 011  name: Gävleborgs län inland
-id: 055  name: Öresund
-id: 012  name: Hallands län
-id: 056  name: Kattegatt
-id: 013  name: Jämtlands län utom fjällen
-id: 057  name: Skagerack
-id: 014  name: Jönköpings län,västra delen utom syd om Vättern
-id: 058  name: Vänern
-id: 015  name: Jönköpings län,östra delen
-id: 016  name: Kalmar län utom Öland
-id: 017  name: Kronobergs län,västra delen
-id: 018  name: Kronobergs län,östra delen
-id: 019  name: Norrbottens län inland
-id: 020  name: Norrbottens län kustland
-id: 021  name: Stockholms län,Roslagskusten
-id: 022  name: Västra Götalands län,Sjuhäradsbygden och Göta älv
-id: 023  name: Skåne län utom Österlen
-id: 024  name: Gävleborgs län kustland
-id: 025  name: Stockholms län utom Roslagskusten
-id: 026  name: Jönköpings län,syd om Vättern
-id: 027  name: Västra Götalands län,sydväst Vänern
-id: 028  name: Södermanlands län
-id: 029  name: Uppsala län utom Upplandskusten %
+1, Stockholms län
+3, Uppsala län
+4, Södermanlands län
+5, Östergötlands län
+6, Jönköpings län
+7, Kronobergs län
+8, Kalmar län
+9, Gotlands län
+10, Blekinge län
+12, Skåne län
+13, Hallands län
+14, Västra Götalands län
+17, Värmlands län
+18, Örebro län
+19, Västmanlands län
+20, Dalarnas län
+21, Gävleborgs län
+22, Västernorrlands län
+23, Jämtlands län
+24, Västerbottens län
+25, Norrbottens län
+41, Bottenviken
+42, Norra Kvarken
+43, Norra Bottenhavet
+44, Södra Bottenhavet
+45, Ålands hav
+46, Skärgårdshavet
+47, Finska Viken
+48, Norra Östersjön
+49, Mellersta Östersjön
+50, Rigabukten
+51, Sydöstra Östersjön
+52, Södra Östersjön
+53, Sydvästra Östersjön
+54, Bälten
+55, Öresund
+56, Kattegatt
+57, Skagerrak
+58, Vänern
 ```
 

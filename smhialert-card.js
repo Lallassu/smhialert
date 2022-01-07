@@ -43,19 +43,17 @@ class SmhiAlertCard extends Polymer.Element {
             <template is="dom-if" if="{{_hasNoMessages(stateObj.attributes.messages)}}">
                <span class="noalerts">No current alerts.</span>
             </template>
-            <template is="dom-repeat" items="{{_toArray(stateObj.attributes.messages)}}">
+            <template is="dom-repeat" items="{{stateObj.attributes.messages}}">
               <div class="box">
-                 <div><span class="district">{{item.value.name}}</span></div>
-                 <template is="dom-repeat" items="{{item.value.msgs}}">
+                 <div><span class="district">{{item.area}}</span></div>
                     <div class="msg" style="color: {{item.event_color}};">
                        <span><b>Event</b>: {{item.event}}<span><br>
+                       <span><b>Level</b>: {{item.level}}<span><br>
                        <span><b>Severity</b>: {{item.severity}}<span><br>
-                       <span><b>Issued</b>: {{item.sent}}</span><br>
-                       <span><b>Certainty</b>: {{item.certainty}}</span><br>
-                       <span><b>Web Link</b>: <a target="_blank" href="{{item.link}}?#ws=wpt-a,proxy=wpt-a,district={{item.district_code}},page=wpt-warning-alla">Read more</a></span><br>
-                       <span><b>Description</b>: {{item.description}}</span>
+                       <span><b>Issued</b>: {{item.published}}</span><br>
+                       <span><b>Period</b>: {{item.start}} - {{item.end}}</span><br>
+                       <span>{{item.details}}</span>
                     </div>
-                 </template>
               </div>
             </template>
           </div>
@@ -74,19 +72,10 @@ class SmhiAlertCard extends Polymer.Element {
     }
 
     _hasNoMessages(x) {
-        if (Object.keys(x).length > 0) {
+        if (x.length > 0) {
             return false;
         }
         return true;
-    }
-
-    _toArray(obj) {
-        return Object.keys(obj).map(function(key) {
-            return {
-                name: key,
-                value: obj[key]
-            };
-        });
     }
 
     setConfig(config) {
@@ -96,7 +85,6 @@ class SmhiAlertCard extends Polymer.Element {
     set hass(hass) {
         this._hass = hass;
         this.stateObj = hass.states[this._config.entity];
-        console.log(this.stateObj);
     }
 
     displayName() {

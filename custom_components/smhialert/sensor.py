@@ -11,7 +11,8 @@ sensor:
 Or specifying a specific district.
 sensor:
   - platform: smhialert
-    district: '019'
+    district: '19'
+    language: 'sv'
 
 Available districts: See README.md
 
@@ -30,7 +31,7 @@ from homeassistant.components.sensor import PLATFORM_SCHEMA
 from homeassistant.const import (CONF_NAME)
 from homeassistant.util import Throttle
 
-__version__ = '1.0.1'
+__version__ = '1.0.2'
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -109,11 +110,11 @@ class SMHIAlert:
     @Throttle(SCAN_INTERVAL)
     def update(self):
         try:
-            response = urlopen(
-                'https://opendata-download-warnings.smhi.se/api/version/2/alerts.json')
+            msgs = []
+            response = urlopen('https://opendata-download-warnings.smhi.se/ibww/api/version/1/warning.json')
             data = response.read().decode('utf-8')
             jsondata = json.loads(data)
-            
+
             if self.language == 'en':
                 self.data['state'] = "No Alerts"
             else:
@@ -125,97 +126,78 @@ class SMHIAlert:
             if len(jsondata) == 0:
                 return
 
-            districts = {}
             notice = ""
-            alerts = []
-            if isinstance(jsondata['alert'], dict):
-                alerts.append(jsondata['alert'])
-            else:
-                alerts = jsondata['alert']
+            for alert in jsondata:
+                areas = []
+                for wa in alert["warningAreas"]:
+                    areas.append(wa)
 
-            for alert in alerts:
-                if not (alert['status'] == 'Actual' or alert['status'] == 'System'):
-                    continue
+                validAreas = []
+                for area in areas:
+                    for a in area["affectedAreas"]:
+                        if str(a["id"]) == self.district or self.district == 'all':
+                            validAreas.append(a[self.language])
 
-                if alert['info']['area']['areaDesc'] != self.district and self.district != 'all':
-                    continue
+                    if len(validAreas) == 0:
+                        continue
 
-                msg = {}
-                
-                msg['district_code'] = alert['info']['area']['areaDesc']
-                # Districts are named same in both SV and EN
-                msg['district_name'] = alert['info']['headline']
-                msg['identifier'] = alert['identifier']
-                msg['sent'] = alert['sent']
-                msg['type'] = alert['msgType']
-                msg['category'] = alert['info']['category']
-                msg['certainty'] = alert['info']['certainty']
-                msg['severity'] = alert['info']['severity']
-                msg['link'] = alert['info']['web']
-                msg['urgency'] = alert['info']['urgency']
+                    msg = {}
+                    msg["event"] = alert["event"][self.language]
 
-                if self.language == 'en':
+                    msg["start"] = area["approximateStart"]
+                    msg["end"] = area["approximateEnd"]
+                    msg["published"] = area["published"]
+
+                    msg["code"] = area["warningLevel"]["code"]
+                    msg["severity"] = area["warningLevel"][self.language]
+                    msg["level"] = area["warningLevel"][self.language]
+                    msg["descr"] = area["eventDescription"][self.language]
+
+                    # Details
+                    details = ""
+                    for m in area["descriptions"]:
+                        details += "%s: %s\n"%(m["title"][self.language],m["text"][self.language])
+
+                    msg["details"] = details
+
+                    msg["area"] = ", ".join(validAreas)
+
                     event_type = "unknown"
                     event_color = "#FFFFFF"
-                    for event in alert['info']['eventCode']:
-                        if event['valueName'] == "system_event_level":
-                            event_type = event['value']
-                        if event['valueName'] == "system_event_level_color":
-                            event_color = event['value']
-                    msg['event'] = event_type
-                    msg['event_color'] = event_color
-                    msg['description'] = alert['info']['description']
+                    if msg["code"] == "RED":
+                        event_color ="#FF0000"
+                    elif msg["code"] == "YELLOW":
+                        event_color = "#FFFF00"
+                    elif msg["code"] == "ORANGE":
+                        event_color = "#FF7F00"
 
-                    # Fetch the english version of the description
-                    for param in alert['info']['parameter']:
-                        if param['valueName'] == 'system_eng_description':
-                            msg['description'] = param['value']
+                    msg["event_color"] = event_color
 
-                    # Prefab a notice that can be easily sent in email/notifications
-                    notice += '''\
-    [{severity}] ({sent})
-    District: {district_name}
-    Type: {type}
-    Certainty: {certainty}
-    Descr:
-    {description}
-    web: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
-
-                else:
-                    event_type = "okänd"
-                    event_color = "#FFFFFF"
-                    for event in alert['info']['eventCode']:
-                        if event['valueName'] == "system_event_level_sv-SE":
-                            event_type = event['value']
-                        if event['valueName'] == "system_event_level_color":
-                            event_color = event['value']
-                    msg['event'] = event_type
-                    msg['event_color'] = event_color
-                    msg['description'] = alert['info']['description']
-                    # Prefab a notice that can be easily sent in email/notifications
-                    notice += '''\
-    [{severity}] ({sent})
-    Område: {district_name}
-    Typ: {type}
-    Trolighet: {certainty}
-    Beskrivning:
-    {description}
-    Länk: {link}?#ws=wpt-a,proxy=wpt-a,district={district_code},page=wpt-warning-alla'\n'''.format(**msg)
-
-                # Add all msgs to each district
-                if msg['district_name'] not in districts:
-                    districts[msg['district_code']] = {}
-                    districts[msg['district_code']
-                              ]["name"] = msg['district_name']
-                    districts[msg['district_code']]["msgs"] = []
-                districts[msg['district_code']]["msgs"].append(msg)
-
-
+                    if self.language == 'en':
+                        notice += '''\
+[{severity}] ({published})
+District: {area}
+Level: {level}
+Type: {event}
+Start: {start}
+End: {end}
+{details}\n'''.format(**msg)
+                    else:
+                        notice += '''\
+[{severity}] ({published})
+Område: {area}
+Nivå: {level}
+Typ: {event}
+Start: {start}
+Slut: {end}
+Beskrivning:
+{details}\n'''.format(**msg)
+                    msgs.append(msg)
 
             self.available = True
-            if len(districts) != 0:
+            if notice != "":
                 self.data['state'] = 'Alert'
-                self.attributes['messages'] = districts
+                self.attributes['messages'] = msgs
                 self.attributes['notice'] = notice
         except Exception as e:
             _LOGGER.error("Unable to fetch data from SMHI.")
