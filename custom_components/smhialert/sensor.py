@@ -77,7 +77,7 @@ class SMHIAlertSensor(Entity):
         return self._api.data['state']
 
     @property
-    def device_state_attributes(self):
+    def extra_state_attributes(self):
         data = {
             'messages': self._api.attributes['messages'],
             'notice': self._api.attributes['notice']
