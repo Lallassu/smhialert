@@ -146,7 +146,14 @@ class SMHIAlert:
                     msg["event"] = alert["event"][self.language]
 
                     msg["start"] = area["approximateStart"]
-                    msg["end"] = area["approximateEnd"]
+
+                    if "approximateEnd" in area:
+                        msg["end"] = area["approximateEnd"]
+                    elif self.language == 'en':
+                        msg["end"] = 'Unknown'
+                    else:
+                        msg["end"] = 'Okänt'
+
                     msg["published"] = area["published"]
 
                     msg["code"] = area["warningLevel"]["code"]
