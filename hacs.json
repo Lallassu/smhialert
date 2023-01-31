@@ -1,0 +1,9 @@
+{
+	"name": "SMHI Weather Warnings & Alerts",
+	"domains": [
+		"sensor"
+	],
+	"country": "SE",
+	"iot_class": "cloud_polling",
+	"render_readme": true
+}
