@@ -165,4 +165,35 @@ List of areas:
 57, Skagerrak
 58, Vänern
 ```
+Example Automation
 
+```Yaml
+alias: "Notification: Weather Alert"
+description: "Alerts if an event happens"
+trigger:
+  - platform: state
+    entity_id:
+      - sensor.weather_alert.<yourarea>
+    to: "Alert"
+    from: null
+condition: []
+action:
+  - service: notify.<device>
+    data:
+      message: >-
+        {% set alerts = state_attr('sensor.weather_alert', 'messages') %}
+        {% for alert in alerts %}
+          There is a weather alert for the area of {{ alert.area }}. The event is classified as {{ alert.event }} with a severity level of {{ alert.severity }}. {{ alert.details.split('\n\n')[0].replace('What happens?: ', '') }}
+        {% endfor %}
+      data:
+        channel: updates
+        timeout: 900
+        visibility: public
+        alert_once: true
+        subject: Weather Alert
+        importance: high
+        notification_icon: mdi:weather-sunny
+        icon_url: >-
+          https://cdn2.iconfinder.com/data/icons/weather-flat-14/64/weather02-512.png
+```
+Replace `sensor.weather_alert.<yourarea>` with your actual sensor and ` service: notify.<device>` with your actual device
